@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --yellow:#ffc72c; --yellow-d:#e5a800; --yellow-l:#fff3c4; --paper:#fffbea; --ink:#1c1a12; --muted:#6b6547; --line:#eadfb0; --panel:#fff; --alert:#d6401f; --ok:#2f7d5b;
+          --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif; --body:system-ui, "Segoe UI", Arial, sans-serif; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--body); margin: 0; background: var(--paper); color: var(--ink); line-height: 1.55; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; letter-spacing: -.01em; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+  .btn { display: inline-block; font: 600 1rem var(--body); padding: 12px 22px; border-radius: 8px; border: 2px solid var(--ink); background: var(--ink); color: var(--yellow); cursor: pointer; text-decoration: none; transition: transform .15s; }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.alt { background: transparent; color: var(--ink); }
+  .btn.sm { padding: 6px 14px; font-size: .9rem; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 800 1.15rem var(--display); text-decoration: none; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px var(--yellow), 0 0 0 6px var(--ink); }
+
+  /* ---------- landing ---------- */
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; gap: 12px; }
+  .nav nav { display: flex; align-items: center; gap: 22px; }
+  .nav nav a:not(.btn) { text-decoration: none; font-weight: 500; }
+  .hero { background: var(--yellow); }
+  .hero-in { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 56px 0 72px; }
+  .hero h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 800; }
+  .hero p { font-size: 1.15rem; max-width: 46ch; margin: 18px 0 28px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .tape { height: 18px; background: repeating-linear-gradient(-45deg, var(--ink) 0 18px, var(--yellow) 18px 36px); }
+  .demo { background: var(--ink); color: #fff; border-radius: 14px; padding: 18px; box-shadow: 8px 8px 0 rgba(28,26,18,.25); }
+  .demo .bar { display: flex; justify-content: space-between; font-size: .85rem; color: #cfc79a; margin-bottom: 14px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; color: var(--yellow); font-weight: 600; }
+  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--alert); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  .bars { display: flex; align-items: flex-end; gap: 5px; height: 120px; border-bottom: 1px solid #4a4528; }
+  .bars i { flex: 1; background: var(--yellow); border-radius: 2px 2px 0 0; }
+  .demo .shot { display: flex; gap: 12px; align-items: center; margin-top: 14px; background: #2b2819; border-radius: 8px; padding: 10px; border-left: 5px solid var(--alert); }
+  .demo .thumb { width: 64px; height: 48px; border-radius: 4px; background: linear-gradient(135deg, #5b5530, #8a7f3f); flex: none; }
+  .section { padding: 64px 0; }
+  .section h2 { font-size: clamp(1.6rem, 3.5vw, 2.3rem); max-width: 22ch; margin-bottom: 28px; }
+  .feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .feat { background: var(--panel); border: 2px solid var(--ink); border-radius: 12px; padding: 20px; }
+  .feat h3 { font-size: 1.15rem; margin-bottom: 8px; }
+  .feat p { margin: 0; color: var(--muted); }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; counter-reset: s; }
+  .step { border-top: 6px solid var(--yellow); padding-top: 12px; counter-increment: s; }
+  .step h3::before { content: counter(s) ". "; color: var(--yellow-d); }
+  .step p { color: var(--muted); margin: 8px 0 0; }
+  .band { background: var(--ink); color: #fff; text-align: center; padding: 56px 20px; }
+  .band h2 { color: var(--yellow); margin: 0 auto 20px; }
+  .band .btn { background: var(--yellow); color: var(--ink); border-color: var(--yellow); }
+  footer { padding: 24px 0; color: var(--muted); font-size: .9rem; }
+
+  /* ---------- dashboard ---------- */
+  .appbar { background: var(--ink); color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 6px solid var(--yellow); }
+  .appbar .dot { background: var(--yellow); box-shadow: 0 0 0 4px var(--ink), 0 0 0 6px var(--yellow); }
+  .appbar .brand { gap: 14px; }
+  .tools { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  #updated { color: #cfc79a; font-size: .9rem; }
+  .appbar .btn { background: var(--yellow); color: var(--ink); border-color: var(--yellow); }
+  .appbar .btn.alt { background: transparent; color: #fff; border-color: #6b6547; }
+  main { max-width: 1040px; margin: 0 auto; padding: 20px 20px 48px; display: grid; gap: 16px; }
+  section.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  h2.t { font-size: 1.05rem; margin: 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .stat { background: var(--yellow); border-radius: 12px; padding: 16px 18px; }
+  .stat:nth-child(2) { background: var(--yellow-l); }
+  .stat:nth-child(3) { background: var(--panel); border: 1px solid var(--line); }
+  .stat b { display: block; font: 800 2rem var(--display); line-height: 1.2; }
+  .stat span, .muted { color: var(--muted); font-size: .9rem; }
+  .stat:first-child span { color: #4a3d00; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .head h2.t { display: flex; align-items: center; gap: 8px; }
+  .head h2.t::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--yellow); }
+  select { font: inherit; font-weight: 600; cursor: pointer; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  canvas { width: 100%; height: 240px; display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; cursor: crosshair; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .grid img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; display: block; background: var(--yellow-l); }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; background: var(--paper); }
+  td img { width: 56px; height: 42px; object-fit: cover; border-radius: 4px; display: block; }
+  #error { background: #fbe7e2; border: 1px solid var(--alert); color: #7a2412; padding: 10px 14px; border-radius: 8px; display: none; }
+  #toasts { position: fixed; top: 12px; right: 12px; display: grid; gap: 8px; z-index: 10; max-width: 320px; }
+  .toast { display: flex; gap: 10px; align-items: center; background: #fff; border: 1px solid var(--line); border-left: 6px solid var(--alert); border-radius: 10px; padding: 10px 12px; box-shadow: 0 6px 18px rgba(28,26,18,.25); }
+  .toast img { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }
+
+  @media (max-width: 760px) { .hero-in { grid-template-columns: 1fr; padding: 36px 0 48px; } .nav nav a:not(.btn) { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .live::before { animation: none; } .btn { transition: none; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div id="toasts" aria-live="assertive"></div>
+
+<!-- ============ LANDING ============ -->
+<div id="landing">
+  <div class="hero">
+    <div class="wrap">
+      <div class="nav">
+        <a class="brand" href="#/"><span class="dot"></span>Motion monitor</a>
+        <nav><a href="#features">Features</a><a href="#how">How it works</a><a class="btn sm" href="#/dashboard">Open dashboard</a></nav>
+      </div>
+      <div class="hero-in">
+        <div>
+          <h1>See every movement the moment it happens.</h1>
+          <p>Motion monitor watches your sensor, takes a picture on every detection, and alerts you right away, so you never have to keep checking.</p>
+          <div class="cta"><a class="btn" href="#/dashboard">Open dashboard</a><a class="btn alt" href="#how">See how it works</a></div>
+        </div>
+        <div class="demo" aria-hidden="true">
+          <div class="bar"><span>Detections, last hour</span><span class="live">Live</span></div>
+          <div class="bars"><i style="height:10%"></i><i style="height:0"></i><i style="height:35%"></i><i style="height:15%"></i><i style="height:0"></i><i style="height:60%"></i><i style="height:25%"></i><i style="height:0"></i><i style="height:90%"></i><i style="height:40%"></i><i style="height:0"></i><i style="height:20%"></i><i style="height:70%"></i><i style="height:30%"></i></div>
+          <div class="shot"><div class="thumb"></div><div><b>Motion detected</b><br><small style="color:#cfc79a">Picture saved, email sent</small></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tape"></div>
+  </div>
+
+  <div class="section" id="features"><div class="wrap">
+    <h2>Everything you need to keep watch</h2>
+    <div class="feats">
+      <div class="feat"><h3>Live sensor graph</h3><p>Count detections per minute over the last hour, or per hour over the last day.</p></div>
+      <div class="feat"><h3>Camera captures</h3><p>Each detection saves a picture, so you can see what moved.</p></div>
+      <div class="feat"><h3>Instant alerts</h3><p>Get a pop-up, a sound and a browser notification as soon as something is detected.</p></div>
+      <div class="feat"><h3>Event log</h3><p>Review every event with its time, picture, file name and email status.</p></div>
+    </div>
+  </div></div>
+
+  <div class="section" id="how" style="padding-top:0"><div class="wrap">
+    <h2>From movement to message in three steps</h2>
+    <div class="steps">
+      <div class="step"><h3>Sensor detects</h3><p>The motion sensor picks up movement in its range.</p></div>
+      <div class="step"><h3>Camera captures</h3><p>A picture is saved and the event is logged with its time.</p></div>
+      <div class="step"><h3>You get alerted</h3><p>The dashboard updates every 5 seconds and shows an alert for new events.</p></div>
+    </div>
+  </div></div>
+
+  <div class="band">
+    <h2>Ready to check on things?</h2>
+    <a class="btn" href="#/dashboard">Open dashboard</a>
+  </div>
+  <footer><div class="wrap">Motion monitor</div></footer>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dash" hidden>
+  <header class="appbar">
+    <a class="brand" href="#/"><span class="dot"></span>Motion monitor</a>
+    <div class="tools">
+      <span id="updated">Loading...</span>
+      <button class="btn sm" id="alertBtn">Enable alerts</button>
+      <a class="btn sm alt" href="#/">Home</a>
+    </div>
+  </header>
+  <main>
+    <div id="error"></div>
+    <div class="stats">
+      <div class="stat"><b id="total">0</b><span>total detections</span></div>
+      <div class="stat"><b id="today">0</b><span>today</span></div>
+      <div class="stat"><b id="last">none</b><span>last detection</span></div>
+    </div>
+    <section class="card">
+      <div class="head"><h2 class="t">Sensor graph: detections over time</h2>
+        <select id="range" aria-label="Time range"><option value="hour">Last hour (per minute)</option><option value="day">Last 24 hours (per hour)</option></select></div>
+      <canvas id="graph"></canvas>
+    </section>
+    <section class="card">
+      <div class="head"><h2 class="t">Camera captures</h2></div>
+      <div id="caps" class="grid"></div>
+      <p id="noCaps" class="muted">No pictures yet.</p>
+    </section>
+    <section class="card">
+      <div class="head"><h2 class="t">Event log</h2></div>
+      <div class="tablewrap"><table><thead><tr><th>Time</th><th>Picture</th><th>File</th><th>Email</th></tr></thead><tbody id="log"></tbody></table></div>
+      <p id="noLog" class="muted">No events yet.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+var $ = function (id) { return document.getElementById(id); };
+var data = [];
+var hoverIdx = -1, gMeta = null;
+
+function fmt(d) { return d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+
+function rrect(g, x, y, w, h, r) {
+  g.beginPath(); g.moveTo(x, y + h); g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+  g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r); g.lineTo(x + w, y + h); g.closePath(); g.fill();
+}
+
+function drawGraph() {
+  var c = $("graph"), dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (!w) return;
+  c.width = w * dpr; c.height = h * dpr;
+  var g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  var hour = $("range").value === "hour";
+  var buckets = hour ? 60 : 24, size = hour ? 60000 : 3600000;
+  var now = Date.now(), start = now - buckets * size, counts = [];
+  for (var i = 0; i < buckets; i++) counts.push(0);
+  data.forEach(function (e) {
+    var t = new Date(e.detected_at).getTime();
+    if (t >= start && t <= now) counts[Math.min(buckets - 1, Math.floor((t - start) / size))]++;
+  });
+  var peak = Math.max.apply(null, counts), max = Math.max(4, Math.ceil(peak / 4) * 4);
+  var padL = 34, padB = 26, padT = 12, padR = 8, pw = w - padL - padR, ph = h - padB - padT, bw = pw / buckets;
+  g.font = "12px system-ui, sans-serif";
+
+  for (var k = 0; k <= 4; k++) {            // gridlines + y labels
+    var y = padT + ph - (ph * k / 4);
+    g.strokeStyle = k ? "#f0e6bd" : "#d9cc8f";
+    g.beginPath(); g.moveTo(padL, y); g.lineTo(w - padR, y); g.stroke();
+    g.fillStyle = "#6b6547"; g.textAlign = "right"; g.fillText(String(max * k / 4), padL - 8, y + 4);
+  }
+
+  var grad = g.createLinearGradient(0, padT, 0, padT + ph);
+  grad.addColorStop(0, "#ffc72c"); grad.addColorStop(1, "#e5a800");
+  counts.forEach(function (n, i) {          // rounded bars
+    if (!n) return;
+    var bh = (n / max) * ph, bwid = Math.max(3, bw - 3);
+    g.fillStyle = i === hoverIdx ? "#1c1a12" : grad;
+    rrect(g, padL + i * bw + (bw - bwid) / 2, padT + ph - bh, bwid, bh, Math.min(4, bwid / 2));
+  });
+
+  g.fillStyle = "#6b6547"; g.textAlign = "left"; g.fillText(hour ? "60 min ago" : "24 h ago", padL, h - 8);
+  g.textAlign = "right"; g.fillText("now", w - padR, h - 8);
+  if (!peak) { g.textAlign = "center"; g.fillText("No detections in this period", padL + pw / 2, padT + ph / 2); }
+
+  if (hoverIdx >= 0 && counts[hoverIdx]) {  // tooltip
+    var when = new Date(start + hoverIdx * size);
+    var label = (hour ? when.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : when.toLocaleTimeString([], { hour: "2-digit" })) + ": " + counts[hoverIdx];
+    var tw = g.measureText(label).width + 16;
+    var tx = Math.min(w - tw - 4, Math.max(4, padL + hoverIdx * bw + bw / 2 - tw / 2));
+    var ty = Math.max(4, padT + ph - (counts[hoverIdx] / max) * ph - 34);
+    g.fillStyle = "#1c1a12"; rrect(g, tx, ty, tw, 24, 6);
+    g.fillStyle = "#ffc72c"; g.textAlign = "left"; g.fillText(label, tx + 8, ty + 16);
+  }
+  gMeta = { padL: padL, bw: bw, buckets: buckets };
+}
+
+$("graph").onmousemove = function (e) {
+  if (!gMeta) return;
+  var i = Math.floor((e.clientX - this.getBoundingClientRect().left - gMeta.padL) / gMeta.bw);
+  i = (i >= 0 && i < gMeta.buckets) ? i : -1;
+  if (i !== hoverIdx) { hoverIdx = i; drawGraph(); }
+};
+$("graph").onmouseleave = function () { hoverIdx = -1; drawGraph(); };
+
+function render() {
+  var now = new Date(), startDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  $("total").textContent = data.length >= 500 ? "500+" : data.length;
+  $("today").textContent = data.filter(function (e) { return new Date(e.detected_at).getTime() >= startDay; }).length;
+  $("last").textContent = data.length ? fmt(new Date(data[0].detected_at)) : "none";
+  drawGraph();
+  var caps = data.filter(function (e) { return e.image_url; }).slice(0, 8);
+  $("noCaps").style.display = caps.length ? "none" : "block";
+  $("caps").innerHTML = caps.map(function (e) {
+    return '<div><a href="' + e.image_url + '" target="_blank"><img src="' + e.image_url + '" alt="Capture" loading="lazy"></a><small class="muted">' + fmt(new Date(e.detected_at)) + "</small></div>";
+  }).join("");
+  var rows = data.slice(0, 20);
+  $("noLog").style.display = rows.length ? "none" : "block";
+  $("log").innerHTML = rows.map(function (e) {
+    var pic = e.image_url ? '<img src="' + e.image_url + '" alt="">' : "-";
+    return "<tr><td>" + fmt(new Date(e.detected_at)) + "</td><td>" + pic + "</td><td>" + (e.image_file || "") + "</td><td>" + (e.email_status || "") + "</td></tr>";
+  }).join("");
+}
+
+function load() {
+  fetch("/api/events").then(function (r) { return r.json(); }).then(function (j) {
+    if (j.error) { $("error").style.display = "block"; $("error").textContent = j.error + " " + (j.detail || ""); return; }
+    $("error").style.display = "none"; data = j.events; checkNew(); render();
+    $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
+  }).catch(function () { $("updated").textContent = "Cannot reach server"; });
+}
+var lastId = null, alertsOn = false, audioCtx = null, baseTitle = document.title;
+
+$("alertBtn").onclick = function () {
+  alertsOn = !alertsOn;
+  $("alertBtn").textContent = alertsOn ? "Alerts: ON" : "Enable alerts";
+  if (alertsOn) {
+    try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+    beep();
+  }
+};
+
+function beep() {
+  if (!audioCtx) return;
+  var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = "square"; o.frequency.value = 880; g.gain.value = 0.15;
+  o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.4);
+}
+
+function showToast(e) {
+  var when = fmt(new Date(e.detected_at));
+  var t = document.createElement("div");
+  t.className = "toast"; t.setAttribute("role", "alert");
+  t.innerHTML = (e.image_url ? '<img src="' + e.image_url + '" alt="">' : "") +
+                "<div><b>Motion detected</b><br><small>" + when + "</small></div>";
+  $("toasts").appendChild(t);
+  setTimeout(function () { t.remove(); }, 10000);
+  if (alertsOn) {
+    beep();
+    if ("Notification" in window && Notification.permission === "granted") {
+      try { new Notification("Motion detected", { body: when, icon: e.image_url || undefined }); } catch (err) {}
+    }
+  }
+  if (document.hidden) document.title = "(!) Motion detected";
+}
+document.addEventListener("visibilitychange", function () { if (!document.hidden) document.title = baseTitle; });
+
+function checkNew() {
+  if (!data.length) { if (lastId === null) lastId = 0; return; }
+  var top = data[0].id;
+  if (lastId === null) { lastId = top; return; }
+  var fresh = data.filter(function (e) { return e.id > lastId; }).reverse();
+  lastId = Math.max(lastId, top);
+  fresh.forEach(showToast);
+}
+
+/* Page switching: #/ = landing, #/dashboard = dashboard */
+function route() {
+  var onDash = location.hash === "#/dashboard";
+  $("landing").hidden = onDash; $("dash").hidden = !onDash;
+  if (onDash) { window.scrollTo(0, 0); render(); }
+  else if (location.hash === "" || location.hash === "#/") window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+
+$("range").onchange = drawGraph;
+route(); load(); setInterval(load, 5000);
+window.addEventListener("resize", drawGraph);
+</script>
+</body>
+</html>
