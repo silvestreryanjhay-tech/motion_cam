@@ -1,0 +1,6 @@
+# On Raspberry Pi OS, install with apt instead of pip:
+#   sudo apt install python3-flask python3-requests python3-picamera2 python3-gpiozero
+flask
+requests
+gpiozero
+picamera2

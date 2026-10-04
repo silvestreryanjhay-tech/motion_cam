@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion monitor</title>
+<style>
+  :root { --bg:#f2f4f3; --panel:#fff; --ink:#1b2420; --muted:#5d6b64; --line:#d6dcd8;
+          --ok:#2f7d5b; --alert:#d6401f; --warn:#c98a00; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, "Segoe UI", Arial, sans-serif; margin: 0; background: var(--bg); color: var(--ink); line-height: 1.5; }
+  header { background: #1b2420; color: #fff; padding: 14px 20px; display: flex;
+           justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  h1 { font-size: 1.2rem; margin: 0; }
+  h2 { font-size: 1rem; margin: 0 0 10px; }
+  .right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #status { padding: 4px 12px; border-radius: 999px; background: var(--ok); font-weight: 600; }
+  #status.alert { background: var(--alert); }
+  #status.idle { background: #5d6b64; }
+  nav { display: flex; gap: 4px; padding: 12px 20px 0; max-width: 960px; margin: 0 auto; }
+  nav button { border-radius: 8px 8px 0 0; border: 1px solid var(--line); border-bottom: 0; background: #e4e9e6;
+               padding: 10px 16px; font: inherit; cursor: pointer; }
+  nav button.active { background: var(--panel); font-weight: 600; }
+  main { max-width: 960px; margin: 0 auto; padding: 0 20px 40px; }
+  .tab { display: none; gap: 16px; }
+  .tab.active { display: grid; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+  .tab.active section:first-child { border-top-left-radius: 0; }
+  button.btn { font: inherit; padding: 8px 14px; border: 1px solid #b9c3bd; border-radius: 6px;
+               background: #e8eeea; cursor: pointer; margin: 0 6px 6px 0; }
+  button.btn:hover { border-color: var(--muted); }
+  button.btn.on { background: var(--ok); color: #fff; border-color: var(--ok); }
+  button.primary { background: #fff; color: #1b2420; border: 0; padding: 8px 14px; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer; }
+  button:focus-visible { outline: 2px solid #1b2420; outline-offset: 2px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  .step { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 130px; background: #fff; }
+  .step b { display: block; font-weight: 600; }
+  .step span { font-size: .85rem; color: var(--muted); }
+  .step.ok { background: #e3f3ea; border-color: var(--ok); }
+  .step.ok span { color: var(--ok); font-weight: 600; }
+  .step.failed { background: #fbe7e2; border-color: var(--alert); }
+  .step.failed span { color: var(--alert); font-weight: 600; }
+  .step.running { background: #fff3d6; border-color: var(--warn); }
+  .step.running span { color: #8a5d00; font-weight: 600; }
+  .step.skipped { background: #eef0ee; }
+  .arrow { align-self: center; color: var(--muted); }
+  .muted { color: var(--muted); }
+  img.live { width: 100%; border-radius: 4px; background: #000; display: block; min-height: 120px; }
+  canvas { width: 100%; height: 150px; display: block; background: #f7f9f8; border-radius: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .grid img { width: 100%; border-radius: 4px; display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.ok { color: var(--ok); font-weight: 600; } td.failed { color: var(--alert); font-weight: 600; }
+  #emailMsg { margin-left: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Motion monitor</h1>
+  <div class="right">
+    <span id="status" class="idle">Connecting</span>
+    <button class="primary" id="simBtn" title="Runs the whole flow without needing the PIR">Simulate motion</button>
+  </div>
+</header>
+
+<nav>
+  <button class="active" data-tab="challenge">IV. Challenge Activity</button>
+  <button data-tab="additional">Additional Task</button>
+</nav>
+
+<main>
+  <div class="tab active" id="tab-challenge">
+    <section>
+      <h2>What happens when motion is detected</h2>
+      <div class="flow" id="flowChallenge"></div>
+      <p class="muted" id="lastLine1"></p>
+    </section>
+    <section>
+      <h2>Email notification</h2>
+      <p class="muted" id="emailInfo"></p>
+      <button class="btn" id="emailBtn">Email alerts: OFF</button>
+      <button class="btn" id="testEmailBtn">Send test email</button><span id="emailMsg" class="muted"></span>
+    </section>
+    <section>
+      <h2>Notification log</h2>
+      <table>
+        <thead><tr><th>Time</th><th>Source</th><th>Picture</th><th>Email</th><th>Database</th></tr></thead>
+        <tbody id="log"></tbody>
+      </table>
+      <p id="noLog" class="muted">No events yet. Wave at the sensor or press Simulate motion.</p>
+    </section>
+  </div>
+
+  <div class="tab" id="tab-additional">
+    <section>
+      <h2>What happens when motion is detected</h2>
+      <div class="flow" id="flowAdditional"></div>
+      <p class="muted" id="lastLine2"></p>
+    </section>
+    <section>
+      <h2>Live camera</h2>
+      <img class="live" id="live" alt="Live camera">
+    </section>
+    <section>
+      <h2>Controls</h2>
+      <button class="btn" id="armBtn">Detection: ON</button>
+      <button class="btn" id="buzBtn">Buzzer: ON</button>
+      <button class="btn" id="testBuzBtn">Test buzzer</button>
+      <button class="btn" id="capBtn">Take picture now</button>
+      <p class="muted">Detections since start: <b id="total">0</b></p>
+    </section>
+    <section>
+      <h2>Sensor graph (last 60 seconds)</h2>
+      <canvas id="graph"></canvas>
+      <p class="muted">Red bar = motion detected. Green = no motion.</p>
+    </section>
+    <section>
+      <h2>Camera captures</h2>
+      <div id="caps" class="grid"></div>
+      <p id="noCaps" class="muted">No pictures yet.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+var $ = function (id) { return document.getElementById(id); };
+var armed = true, buzzerOn = true, emailOn = false, currentTab = "challenge";
+var STEP_TEXT = { waiting: "waiting", running: "working", ok: "done", failed: "failed", skipped: "skipped" };
+
+function post(url, body) {
+  return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(body || {}) }).then(function (r) { return r.json(); });
+}
+
+document.querySelectorAll("nav button").forEach(function (b) {
+  b.onclick = function () {
+    currentTab = b.getAttribute("data-tab");
+    document.querySelectorAll("nav button").forEach(function (x) { x.classList.toggle("active", x === b); });
+    $("tab-challenge").classList.toggle("active", currentTab === "challenge");
+    $("tab-additional").classList.toggle("active", currentTab === "additional");
+    $("live").src = currentTab === "additional" ? "/video" : "";
+    refresh();
+  };
+});
+
+$("simBtn").onclick = function () { post("/api/simulate").then(refresh); };
+$("armBtn").onclick = function () { post("/api/set", { armed: !armed }); };
+$("buzBtn").onclick = function () { post("/api/set", { buzzer: !buzzerOn }); };
+$("emailBtn").onclick = function () { post("/api/set", { email: !emailOn }); };
+$("testBuzBtn").onclick = function () { post("/api/test_buzzer"); };
+$("capBtn").onclick = function () { post("/api/capture").then(refresh); };
+$("testEmailBtn").onclick = function () {
+  $("emailMsg").textContent = "Sending...";
+  post("/api/test_email").then(function (r) { $("emailMsg").textContent = r.message; });
+};
+
+function renderFlow(el, ev, keys, labels) {
+  el.innerHTML = keys.map(function (k, i) {
+    var st = ev ? ev.steps[k] : "waiting";
+    return '<div class="step ' + st + '"><b>' + labels[k] + "</b><span>" + STEP_TEXT[st] + "</span></div>" +
+           (i < keys.length - 1 ? '<div class="arrow">&rarr;</div>' : "");
+  }).join("");
+}
+
+function drawGraph(d) {
+  var c = $("graph"), dpr = window.devicePixelRatio || 1;
+  var w = c.clientWidth, h = c.clientHeight;
+  if (!w) return;
+  c.width = w * dpr; c.height = h * dpr;
+  var g = c.getContext("2d");
+  g.scale(dpr, dpr);
+  g.clearRect(0, 0, w, h);
+  var barW = Math.max(2, w / 60);
+  d.history.forEach(function (p) {
+    var x = ((p[0] - (d.now - 60)) / 60) * w;
+    var bh = p[1] ? h - 20 : 3;
+    g.fillStyle = p[1] ? "#d6401f" : "#2f7d5b";
+    g.fillRect(x, h - 4 - bh, barW - 1, bh);
+  });
+}
+
+function sourceName(s) { return s === "sensor" ? "Motion sensor" : (s === "simulated" ? "Simulated" : "Manual"); }
+
+function render(d) {
+  armed = d.armed; buzzerOn = d.buzzer; emailOn = d.email;
+  var s = $("status");
+  if (d.warmup > 0) { s.className = "idle"; s.textContent = "Warming up " + d.warmup + "s"; }
+  else if (!d.armed) { s.className = "idle"; s.textContent = "Detection off"; }
+  else if (d.motion) { s.className = "alert"; s.textContent = "Motion detected"; }
+  else { s.className = ""; s.textContent = "Watching"; }
+
+  var flowEvents = d.events.filter(function (e) { return e.source !== "manual"; });
+  var last = flowEvents.length ? flowEvents[0] : null;
+  var lastText = last ? "Last event: " + last.date + ", " + last.time + " (" + sourceName(last.source) + ")"
+                      : "Waiting for motion. Wave at the sensor or press Simulate motion.";
+  $("lastLine1").textContent = lastText; $("lastLine2").textContent = lastText;
+  renderFlow($("flowChallenge"), last, ["motion", "picture", "email", "database"],
+    { motion: "Motion detected", picture: "Picture captured", email: "Email sent", database: "Saved to Supabase" });
+  renderFlow($("flowAdditional"), last, ["motion", "buzzer", "picture"],
+    { motion: "Motion detected", buzzer: "Buzzer sounds", picture: "Camera captures" });
+
+  $("emailInfo").textContent = d.email_ready
+    ? "Gmail is set up. Pictures are emailed to " + d.receiver + "."
+    : "Gmail is not set up yet. Add your email and App Password in config.py, then restart the app.";
+  $("emailBtn").textContent = "Email alerts: " + (d.email ? "ON" : "OFF");
+  $("emailBtn").className = "btn" + (d.email ? " on" : "");
+  $("emailBtn").disabled = !d.email_ready;
+  $("testEmailBtn").disabled = !d.email_ready;
+
+  var rows = d.events.filter(function (e) { return e.source !== "manual"; });
+  $("noLog").style.display = rows.length ? "none" : "block";
+  $("log").innerHTML = rows.map(function (e) {
+    var pic = e.file ? '<a href="/captures/' + e.file + '" target="_blank">view</a>' : "-";
+    return "<tr><td>" + e.date + ", " + e.time + "</td><td>" + sourceName(e.source) + "</td><td>" + pic +
+           '</td><td class="' + e.steps.email + '">' + STEP_TEXT[e.steps.email] +
+           '</td><td class="' + e.steps.database + '">' + STEP_TEXT[e.steps.database] + "</td></tr>";
+  }).join("");
+
+  $("armBtn").textContent = "Detection: " + (d.armed ? "ON" : "OFF");
+  $("armBtn").className = "btn" + (d.armed ? " on" : "");
+  $("buzBtn").textContent = "Buzzer: " + (d.buzzer ? "ON" : "OFF");
+  $("buzBtn").className = "btn" + (d.buzzer ? " on" : "");
+  $("total").textContent = d.total;
+
+  var caps = d.events.filter(function (e) { return e.file; }).slice(0, 6);
+  $("noCaps").style.display = caps.length ? "none" : "block";
+  $("caps").innerHTML = caps.map(function (e) {
+    return '<div><a href="/captures/' + e.file + '" target="_blank"><img src="/captures/' + e.file +
+           '" alt="Capture"></a><small class="muted">' + e.time + "</small></div>";
+  }).join("");
+
+  if (currentTab === "additional") drawGraph(d);
+}
+
+function refresh() {
+  fetch("/api/status").then(function (r) { return r.json(); }).then(render)
+    .catch(function () { $("status").className = "idle"; $("status").textContent = "Disconnected"; });
+}
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>
